@@ -1,0 +1,58 @@
+% Upravená data
+x = [0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6]; % r(m)
+y = [5.37, 6.02, 6.72, 7.5, 8.9, 9.4, 11.5]; % I(klux) (upravená hodnota)
+
+% Vykreslení bodového grafu
+figure;
+scatter(x, y, 'ro', 'filled', 'DisplayName', 'Naměřené hodnoty');
+hold on;
+xlabel('r (m)');
+ylabel('I (klux)');
+title('Závislost intenzity osvětlení na vzdálenosti');
+grid on;
+
+% Proložení polynomem a nalezení nejlepšího stupně
+max_degree = 5;
+best_R2 = 0;
+best_degree = 1;
+x_fine = linspace(min(x), max(x), 100); % Pro hladké vykreslení fitu
+
+for degree = 1:max_degree
+    p = polyfit(x, y, degree);
+    y_fit = polyval(p, x);
+    y_fine_fit = polyval(p, x_fine);
+
+    % Výpočet R^2
+    SStotal = sum((y - mean(y)).^2);
+    SSres = sum((y - y_fit).^2);
+    R2 = 1 - (SSres / SStotal);
+
+    % Aktualizace nejlepšího fitu
+    if R2 > best_R2
+        best_R2 = R2;
+        best_degree = degree;
+        best_fit = y_fine_fit;
+    end
+end
+
+% Vykreslení nejlepšího polynomiálního fitu
+plot(x_fine, best_fit, 'b-', 'DisplayName', sprintf('Poly. stupeň %d (R^2=%.4f)', best_degree, best_R2));
+
+% Analýza poklesu jako r^(-alpha)
+exponent = -1.8;
+coeff = mean(y .* (x .^ -exponent)); % Koeficient pro přizpůsobení modelu
+y_theory = coeff * (x .^ exponent); % Teoretický model I ~ r^(-1.8)
+
+% Výpočet odchylky mezi modelem a daty
+error = mean(abs(y - y_theory) ./ y) * 100; % Průměrná relativní chyba v %
+
+% Vykreslení teoretického modelu
+plot(x, y_theory, 'g--', 'DisplayName', sprintf('Fit r^{%.1f}, chyba %.2f%%', exponent, error));
+
+% Výpis nejlepšího stupně polynomu a odchylky od r^(-1.8)
+fprintf('Nejlepší stupeň polynomu: %d s R^2 = %.4f\n', best_degree, best_R2);
+fprintf('Průměrná odchylka od r^{%.1f} modelu: %.2f%%\n', exponent, error);
+
+% Legenda
+legend;
+hold off;
