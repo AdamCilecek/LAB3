@@ -1,0 +1,157 @@
+
+
+
+
+%%PRVNÍ ČÁST KÓDU SLOUŽÍ PRO ZJIŠTĚNÍ R0 ZA POKOJOVÉ TEPLOTY PŘI PŘIPOJENÉM POMOCNÉM ODPORU 100 OHMŮ
+% Data
+U = [1.2, 1.7, 3, 3.6, 4, 4.5, 5.1, 5.6, 6.1, 6.7]; % mV
+I = [6.9, 9.7, 17, 20.4, 22.7, 25.6, 28.8, 31.9, 34.4, 37.7]; % mA
+
+% Převod jednotek (U na V, I na A)
+U = U * 1e-3;
+I = I * 1e-3;
+
+% Lineární regrese (najdeme směrnici R)
+p = polyfit(I, U, 1);
+R = p(1); % Směrnice přímky = odpor
+
+% Odhad směrodatné odchylky
+U_fit = polyval(p, I); % Vypočtené hodnoty z lineární regrese
+residuals = U - U_fit; % Rezidua (chyby)
+sigma_R = std(residuals) / sqrt(sum((I - mean(I)).^2)); % Směrodatná odchylka směrnice
+
+% Vykreslení grafu
+figure;
+plot(I, U, 'o', 'MarkerSize', 8, 'DisplayName', 'Naměřené body'); 
+hold on;
+plot(I, U_fit, 'r-', 'LineWidth', 2, 'DisplayName', sprintf('Linear fit: R = %.2f ± %.2f Ω', R, sigma_R));
+grid on;
+xlabel('Proud I (A)');
+ylabel('Napětí U (V)');
+title('Voltampérová charakteristika');
+legend;
+hold off;
+
+% Výpis odporu a jeho odchylky
+fprintf('Odpor R = %.2f ± %.2f Ω\n', R, sigma_R);
+
+
+
+
+
+
+
+
+
+%%DRUHÁ ČÁST KÓDU SLOUŽÍ PRO VYKRESLENÍ GRAFU ZÁVILOSTI P(w) NA U_TH A ZJIŠTĚNÍ ZÁVISLOSTI MEZI TĚMITO VELIČINAMI
+% Data
+P = [3.85, 5.45, 7.19, 8.62, 10.36, 11.76, 12.71, 15.07, 18.49, 21.62, 24.31]; % W
+U_th = [0.27, 0.75, 1.39, 2.04, 2.77, 3.38, 3.94, 4.94, 6.45, 7.71, 8.89]; % V
+
+% Lineární regrese (najdeme směrnici k)
+p = polyfit(P, U_th, 1);
+k = p(1); % Směrnice přímky
+
+% Odhad směrodatné odchylky směrnice
+U_th_fit = polyval(p, P); % Vypočtené hodnoty z lineární regrese
+residuals = U_th - U_th_fit; % Rezidua (chyby)
+sigma_k = std(residuals) / sqrt(sum((P - mean(P)).^2)); % Směrodatná odchylka směrnice
+
+% Vykreslení grafu
+figure;
+plot(P, U_th, 'o', 'MarkerSize', 8, 'DisplayName', 'Naměřené body'); 
+hold on;
+plot(P, U_th_fit, 'r-', 'LineWidth', 2, 'DisplayName', sprintf('Linear fit: k = %.2f ± %.2f', k, sigma_k));
+grid on;
+xlabel('Výkon P (W)');
+ylabel('Napětí U_{th} (V)');
+title('Závislost U_{th} na P');
+legend;
+hold off;
+
+% Výpis směrnice a její odchylky
+fprintf('Směrnice k = %.2f ± %.2f\n', k, sigma_k);
+
+%%TŘETÍ ČÁST KÓDU SLOUŽÍ PRO VYPOČÍTÁNÍ HODNOT DELTA T KTERÉ SE NÁSLEDNĚ PRICTOU K POKOJOVE TEPLOTE A VYSLEDNA HODNOTA SE DOSADI JAKO ZLOGARITMOVANA PROMENNA DO GRAFU
+% Definice konstant
+R0 = 100; % Příklad hodnoty, nahraďte skutečnou hodnotou
+alpha = 4.82e-3; % Příklad hodnoty, nahraďte skutečnou hodnotou
+beta = 6.76e-7; % Příklad hodnoty, nahraďte skutečnou hodnotou
+
+% Seznam hodnot R
+R_values = [95, 98, 100, 102, 105]; % Příklad hodnot, nahraďte skutečnými hodnotami
+
+% Inicializace pole pro výsledky
+delta_T_values = zeros(size(R_values));
+
+% Výpočet Delta T pro každé R
+for i = 1:length(R_values)
+    R = R_values(i);
+    discriminant = R0^2 * alpha^2 - 4 * R0 * beta * (R0 - R);
+    
+    if discriminant >= 0
+        delta_T = (-R0 * alpha + sqrt(discriminant)) / (2 * R0 * beta);
+        if delta_T > 0
+            delta_T_values(i) = delta_T;
+        end
+    end
+end
+
+% Filtrace kladných hodnot
+positive_delta_T = delta_T_values(delta_T_values > 0);
+
+% Zápis výsledků do Excel tabulky
+filename = 'delta_T_results.xlsx';
+writematrix(positive_delta_T', filename);
+
+disp('Výpočet dokončen. Výsledky byly zapsány do souboru delta_T_results.xlsx.');
+
+
+
+
+
+
+
+
+
+
+%%ČTVRTÁ ČÁST KÓDU SLOUŽÍ PRO ZJIŠTĚNÍ EXPONENTU POMOCÍ ZLOGARITMOVANÝCH NAMĚŘENÝCH HODNOT
+% Naměřené hodnoty
+T = [823.93, 923.16, 1000.89, 1048.76, 1105.52, 1142.95, 1170.81, 1216.87, 1280.56, 1325.52, 1361.17];
+U_th = [0.27, 0.75, 1.39, 2.04, 2.77, 3.38, 3.94, 4.94, 6.45, 7.71, 8.89];
+
+% Logaritmování hodnot
+log_T = log(T);
+log_Uth = log(U_th);
+
+% Lineární regrese (polyfit na logaritmované hodnoty)
+p = polyfit(log_T, log_Uth, 1);
+
+% Směrnice přímky a absolutní člen
+k = p(1);
+b = p(2);
+
+% Výpis výsledku
+fprintf('Směrnice k = %.4f\n', k);
+fprintf('Průsečík b = %.4f\n', b);
+
+% Vykreslení grafu v log-log měřítku
+figure;
+loglog(T, U_th, 'o', 'MarkerSize', 8, 'DisplayName', 'Naměřené hodnoty');
+hold on;
+T_fit = linspace(min(T), max(T), 100);
+log_U_th_fit = k * log(T_fit) + b;
+U_th_fit = exp(log_U_th_fit);
+loglog(T_fit, U_th_fit, '-', 'LineWidth', 2, 'DisplayName', sprintf('y = %.3f x + %.3f', k, b));
+
+% Popisky
+xlabel('log(T) (K)');
+ylabel('log(U_{th})');
+title('Graf log(U_{th}) vs. log(T)');
+legend;
+grid on;
+
+
+
+
+%%PS: hodnoty je potreba vymenit za vlastni namerene
