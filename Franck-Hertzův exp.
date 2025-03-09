@@ -1,0 +1,27 @@
+% Data
+U = 1:70;  % Napětí (V)
+I = [0.5, 0.6, 0.6, 0.6, 0.6, 0.7, 0.9, 1.9, 2.4, 2.6, ...
+     3.2, 3.3, 3.8, 4.3, 4.7, 5, 4, 2.8, 1.6, 0.8, ...
+     0.5, 0.3, 1.1, 2.8, 4.3, 5.6, 6.7, 7.4, 8, 8.4, ...
+     8.9, 9, 8.2, 6.2, 4, 2.3, 0.9, 0.2, 0, 1.3, ...
+     3, 5.3, 7, 8.6, 9.9, 10.9, 11.8, 12.7, 12.9, 11.7, ...
+     9.8, 7.6, 5.3, 3.3, 1.6, 0.7, 1.7, 3, 5, 7.1, ...
+     9.1, 11.4, 13.4, 15.5, 17.2, 18.2, 17.9, 17, 15.1, 13.1];
+
+% Detekce lokálních maxim a minim
+[maxima, max_locs] = findpeaks(I);   % Lokální maxima
+[minima, min_locs] = findpeaks(-I);  % Lokální minima (negace pro detekci minima)
+
+% Vykreslení grafu
+figure;
+plot(U, I, 'bo-', 'LineWidth', 1.5, 'MarkerSize', 5); % Hlavní křivka
+hold on;
+scatter(U(max_locs), maxima, 'r', 'filled');  % Lokální maxima červeně
+scatter(U(min_locs), -minima, 'g', 'filled'); % Lokální minima zeleně (opět negace)
+grid on;
+
+% Přidání popisků
+xlabel('Napětí U (V)');
+ylabel('Proud I (mA)');
+title('Proud a napětí v našem experimentu');
+legend('Průběh proudu', 'Lokální maxima', 'Lokální minima');
