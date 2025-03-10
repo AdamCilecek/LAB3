@@ -1,0 +1,53 @@
+%%HODNOTY RYCHLOSTI JE POTREBA VYPOCITAT NEKDE BOKEM (IDEALNE V EXCELU
+A PAK NAIMPORTOVAT TREBA PRES CHATGPT/DEEPSEEK, KETRY JE DOSTANOU DO MAT TVARU,
+BTW RYCHLOST 2 MUSI BYT VZDYCKY VETSI ABY VYCHAZEL VZORECEK (JE JEDNO JESTLI JE TO 
+RYCHLOST NAHORU NEBO DOLU, PROSTE MUSI BYT VETSI  $$ 
+
+$$TABULKA SE PAK STRCI DO CHATGPT A OPTIMALIZUJE SE PRO LATEX NEBO JINE TEXTOVE 
+EDITORY$$
+
+
+% Konstanty
+C1 = 2.73e-11;
+C2 = 6.37e-5;
+U = 450;
+e = 1.602e-19; % Elementární náboj
+
+% Data z tabulky (v1 a v2)
+v1 = [0.000422078, 0.00026, 0.000150812, 0.000216667, 0.000216667, ...
+      0.000338542, 0.000433333, 0.000317073, 0.000481481, 0.0005, ...
+      0.00029148, 0.000218121, 0.000419355, 0.000485075, 0.000351351, ...
+      0.000541667, 0.000467626, 0.00025];
+
+v2 = [0.000427632, 0.000477941, 0.000169271, 0.000345745, 0.000355191, ...
+      0.000393939, 0.000585586, 0.00052, 0.000496183, 0.000643564, ...
+      0.00052, 0.000336788, 0.000436242, 0.000560345, 0.000448276, ...
+      0.000550847, 0.000590909, 0.000288889];
+
+% Výpočty podle vzorců
+Q = C1 * ((v1 + v1) ./ U) .* sqrt(v1 + v2);
+r = C2 * sqrt(v2 - v1);
+
+% Výpočet Q/e a zaokrouhlení na 2 desetinná místa (n)
+n = round(Q / e, 2); % Zaokrouhlení na 2 desetinná místa
+
+% Zaokrouhlení n na celé číslo a výpočet e_exp
+n_rounded = round(n); % Zaokrouhlení na celé číslo
+e_exp = Q ./ n_rounded; % Experimentální hodnota e
+
+% Výpočet průměrné hodnoty e_exp a směrodatné odchylky
+e_exp_mean = mean(e_exp); % Průměrná hodnota
+e_exp_std = std(e_exp); % Směrodatná odchylka
+
+% Vytvoření tabulky výsledků
+tabulka = table((1:18)', Q', r', n', e_exp', ...
+                'VariableNames', {'CisloKapky', 'Q_C', 'r_m', 'n', 'e_exp'});
+
+% Zobrazení tabulky v příkazovém řádku
+disp(tabulka);
+
+% Zobrazení průměrné hodnoty a směrodatné odchylky
+fprintf('Průměrná hodnota e_exp: %.4e C\n', e_exp_mean);
+fprintf('Směrodatná odchylka e_exp: %.4e C\n', e_exp_std);
+
+
