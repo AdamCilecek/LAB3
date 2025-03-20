@@ -1,0 +1,55 @@
+%%DOSADIT VLASTNI HONOTY ZA VNOVOU DELKU A U%%
+%% V GRAFU DOSATNEŠ HODNOTY VYSTUPNI PRACE I PLANCKOVU KONSTANTU, POKUD CHCES POUYE GRAF DO PROTOKOLU, TAK SMAY POSLEDNI ODSTANVEC OZNACENY
+% Zobrazení směrnice, posunutí, Planckovy konstanty, mezní práce a jejich chyb% %%
+
+
+
+% Vstupní data
+lambda_nm = [366, 405, 436, 546, 578]; % vlnová délka v nm
+U = [1.77, 1.44, 1.17, 0.63, 0.65];   % napětí v V
+
+% Převod vlnové délky na frekvenci
+c = 3e8; % rychlost světla v m/s
+lambda_m = lambda_nm * 1e-9; % převod nm na m
+f = c ./ lambda_m; % frekvence v Hz
+
+% Lineární fit s výstupem chyb
+[coefficients, S] = polyfit(f, U, 1); % Proložení lineární přímky (1. stupeň polynomu)
+slope = coefficients(1); % Směrnice přímky (a)
+intercept = coefficients(2); % Posunutí přímky (b)
+fit_line = polyval(coefficients, f); % Hodnoty přímky pro vykreslení
+
+% Chyby směrnice a posunutí
+slope_error = sqrt(S.normr^2 / S.df) * inv(S.R); % Chyba směrnice
+intercept_error = sqrt(S.normr^2 / S.df) * inv(S.R); % Chyba posunutí
+
+% Výpočet Planckovy konstanty
+e = 1.602e-19; % Elementární náboj v Coulombech (C)
+h_calculated = slope * e; % Planckova konstanta (J·s)
+h_error = slope_error(1,1) * e; % Chyba Planckovy konstanty
+
+% Výpočet mezní práce (výstupní práce)
+W0 = -intercept * e; % Mezní práce v joulech (J)
+W0_eV = W0 / e; % Převod mezní práce na elektronvolty (eV)
+W0_error = intercept_error(2,2) * e; % Chyba mezní práce v joulech
+W0_eV_error = W0_error / e; % Chyba mezní práce v elektronvoltech
+
+% Známá hodnota Planckovy konstanty
+h_known = 6.626e-34; % Známá hodnota Planckovy konstanty (J·s)
+
+% Vytvoření grafu
+figure;
+plot(f, U, 'bo', 'MarkerSize', 8, 'LineWidth', 1.5); % Modré tečky
+hold on;
+plot(f, fit_line, 'k-', 'LineWidth', 1); % Tenká černá čára pro fit
+xlabel('Frekvence (Hz)');
+ylabel('Napětí (V)');
+title('Závislost napětí na frekvenci s lineárním fitem');
+grid on;
+legend('Naměřené body', 'Lineární fit', 'Location', 'best');
+
+% Zobrazení směrnice, posunutí, Planckovy konstanty, mezní práce a jejich chyb
+annotation('textbox', [0.15, 0.5, 0.3, 0.3], 'String', ...
+    sprintf('Směrnice (a): %.4e ± %.4e V/Hz\nPosunutí (b): %.4f ± %.4f V\nh (vypočtená): %.4e ± %.4e J·s\nh (známá): %.4e J·s\nW0 (vypočtená): %.4e ± %.4e J\nW0 (vypočtená): %.4f ± %.4f eV', ...
+    slope, slope_error(1,1), intercept, intercept_error(2,2), h_calculated, h_error, h_known, W0, W0_error, W0_eV, W0_eV_error), ...
+    'FitBoxToText', 'on', 'BackgroundColor', 'white', 'EdgeColor', 'black');
