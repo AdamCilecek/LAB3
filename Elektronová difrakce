@@ -1,0 +1,77 @@
+%%NUTNÉ ZADAT SVOJE U, r1, r2%%
+%% PROGRAM VVYPÍŠE TABULKU V KONZOLI A I PRŮMĚRNÉ HODNOTY SE SMĚRODATNÝMI ODCHYLKAMI, JE POTŘEBA TUTO TABULKU PŘEIMORTOVAT DO FORMATU 
+V JAKEM PRACUJI (LATEX, DOCX, ATD.)%%
+
+
+
+
+
+% Konstanty
+h = 6.626e-34;          % Planckova konstanta [J.s]
+c = 3e8;                % Rychlost světla [m/s]
+e = 1.602e-19;          % Elementární náboj [C]
+m_e = 9.109e-31;        % Hmotnost elektronu [kg]
+R = 0.65;               % Poloměr křivosti čočky [m]
+
+% Vstupní data (U v kV, převedeme na V)
+U_kV = [5.2, 5.7, 6.2, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]; % Napětí [kV]
+U = U_kV * 1e3;         % Převod na [V]
+
+r1 = [0.136, 0.130, 0.120, 0.116, 0.108, 0.098, 0.095, 0.092, 0.087, 0.083, 0.080]; % r1 [m]
+r2 = [0.218, 0.216, 0.206, 0.203, 0.188, 0.186, 0.179, 0.162, 0.158, 0.148, 0.140]; % r2 [m]
+
+% Inicializace výsledků
+results = cell(length(U), 6); % U, r1, r2, lambda [pm], d1 (n=1) [pm], d2 (n=2) [pm]
+d1_all = []; % Pro uložení všech d1
+d2_all = []; % Pro uložení všech d2
+
+% Výpočet pro každé U
+for i = 1:length(U)
+    % Výpočet lambda (de Broglie s relativistickou korekcí)
+    lambda = h / sqrt(2 * m_e * e * U(i) * (1 + (e * U(i)) / (2 * m_e * c^2)));
+    lambda_pm = lambda * 1e12; % Převod na pikometry [pm]
+    
+    % Výpočet theta pro r1 a r2
+    theta1 = asin(r1(i) / (2 * R)) / 2; % pro r1 (n=1)
+    theta2 = asin(r2(i) / (2 * R)) / 2; % pro r2 (n=2)
+    
+    % Výpočet d pro n=1 (r1) a n=2 (r2)
+    d1 = (1 * lambda) / (2 * sin(theta1)); % n=1 [m]
+    d2 = (2 * lambda) / (2 * sin(theta2)); % n=2 [m]
+    
+    d1_pm = d1 * 1e12; % Převod na pikometry [pm]
+    d2_pm = d2 * 1e12; 
+    
+    % Uložení výsledků (zaokrouhleno na 3 des. místa)
+    results{i, 1} = round(U_kV(i), 3);
+    results{i, 2} = round(r1(i), 3);
+    results{i, 3} = round(r2(i), 3);
+    results{i, 4} = round(lambda_pm, 3);
+    results{i, 5} = round(d1_pm, 3);
+    results{i, 6} = round(d2_pm, 3);
+    
+    d1_all = [d1_all; d1_pm]; % Uložení d1
+    d2_all = [d2_all; d2_pm]; % Uložení d2
+end
+
+% Vytvoření a zobrazení tabulky
+T = cell2table(results, 'VariableNames', {'U [kV]', 'r1 [m]', 'r2 [m]', 'lambda [pm]', 'd (n=1) [pm]', 'd (n=2) [pm]'});
+disp(T);
+
+% Výpočet statistik pro d1 a d2
+mean_d1 = mean(d1_all);
+mean_d2 = mean(d2_all);
+std_d1 = std(d1_all);
+std_d2 = std(d2_all);
+
+% Zobrazení výsledků v konzoli
+fprintf('\nStatistika pro d (n=1):\n');
+fprintf('Průměrná hodnota: %.3f pm\n', mean_d1);
+fprintf('Směrodatná odchylka: %.3f pm\n\n', std_d1);
+
+fprintf('Statistika pro d (n=2):\n');
+fprintf('Průměrná hodnota: %.3f pm\n', mean_d2);
+fprintf('Směrodatná odchylka: %.3f pm\n', std_d2);
+
+% Export do CSV (volitelné)
+writetable(T, 'vysledky_final.csv');
